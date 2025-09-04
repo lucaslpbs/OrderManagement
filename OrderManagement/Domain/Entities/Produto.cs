@@ -9,6 +9,6 @@ namespace OrderManagementAPI.Domain.Entities
         public decimal Preco { get; set; }
         public CategoriaProduto Categoria { get; set; }
         public string? ImagemBase64 { get; set; }
-        public bool Ativo { get; set; } = true;
+        public bool Status { get; set; } = true;
     }
 }

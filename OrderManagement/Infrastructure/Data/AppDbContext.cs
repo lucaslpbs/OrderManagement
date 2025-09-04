@@ -12,5 +12,6 @@ namespace OrderManagementAPI.Infrastructure.Data
 
         public DbSet<Garcom> Garcons => Set<Garcom>();
         public DbSet<Produto> Produtos => Set<Produto>();
+        public DbSet<Comanda> Comandas => Set<Comanda>();
     }
 }

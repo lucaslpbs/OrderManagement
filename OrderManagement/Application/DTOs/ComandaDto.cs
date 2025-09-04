@@ -3,7 +3,24 @@ namespace OrderManagementAPI.Application.DTOs
 {
     public class ComandaDto
     {
-        public record AbrirComandaDto(int Numero, int Mesa, string NomeCliente, string? Email, string? Telefone);
-        public record AdicionarItemDto(Guid ProdutoId, int Quantidade);
+        public class AbrirComandaDto
+        {
+            public int NumeroMesa { get; set; }
+            public string NomeCliente { get; set; } = string.Empty;
+            public string? Email { get; set; }
+            public string? Telefone { get; set; }
+        }
+
+        public class AdicionarItemDto
+        {
+            public Guid ProdutoId { get; set; }
+            public int Quantidade { get; set; }
+        }
+
+        public class FecharComandaDto
+        {
+            public int ComandaId { get; set; }
+            public string Observacao { get; set; } = string.Empty;
+        }
     }
 }
