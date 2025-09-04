@@ -10,8 +10,8 @@ namespace OrderManagementAPI.Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Garcom> Garcons => Set<Garcom>();
-        public DbSet<Produto> Produtos => Set<Produto>();
-        public DbSet<Comanda> Comandas => Set<Comanda>();
+        public DbSet<Garcom> Garcom => Set<Garcom>();
+        public DbSet<Produto> Produto => Set<Produto>();
+        public DbSet<Comanda> Comanda => Set<Comanda>();
     }
 }

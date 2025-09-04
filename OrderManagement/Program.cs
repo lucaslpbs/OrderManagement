@@ -1,18 +1,23 @@
-using OrderManagementAPI.Infrastructure.Data;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
+using OrderManagementAPI.Infrastructure.Data;
+using OrderManagementAPI.Services;
+using Pomelo.EntityFrameworkCore.MySql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --------------------
-// DB Context
+// DB Context (MySQL)
 // --------------------
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    opt.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MySqlServerVersion(new Version(8, 0, 33)) // Ajuste conforme sua versão do MySQL
+    ));
 
 // --------------------
 // Identity
@@ -26,7 +31,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 // --------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
-
+builder.Services.AddScoped<OrderService>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -87,6 +92,17 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://192.168.1.72:8080") // endereço do seu front
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 
 // --------------------
 // Build app
@@ -109,7 +125,7 @@ app.UseHttpsRedirection();
 // --------------------
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseCors("AllowFrontend");
 app.MapControllers();
 
 app.Run();

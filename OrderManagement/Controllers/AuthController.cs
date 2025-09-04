@@ -23,19 +23,30 @@ namespace OrderManagementAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _userManager.FindByNameAsync(dto.Username);
+            var user = await _userManager.FindByNameAsync(dto.UserName);
             if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
                 return Unauthorized("Credenciais inválidas");
 
-            var claims = new[]
-            {
-            new Claim(ClaimTypes.Name, user.UserName!),
-            new Claim(ClaimTypes.Role, "Garcom") // ou Admin
-        };
+            // Pega as roles reais do usuário
+            var roles = await _userManager.GetRolesAsync(user);
 
+            // Claims base
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.UserName!),
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id)
+    };
+
+            // Adiciona as roles do banco
+            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+
+            // Geração do token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(4),
                 signingCredentials: creds
@@ -45,5 +56,5 @@ namespace OrderManagementAPI.Controllers
         }
     }
 
-    public record LoginDto(string Username, string Password);
+    public record LoginDto(string UserName, string Password);
 }

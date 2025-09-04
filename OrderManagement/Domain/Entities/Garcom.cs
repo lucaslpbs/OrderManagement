@@ -10,7 +10,5 @@
         public bool Status { get; set; } = true;
         public DateTime? UltimoAcesso { get; set; }
 
-        // Chave para o usuário do Identity
-        public string IdentityUserId { get; set; } = null!;
     }
 }
