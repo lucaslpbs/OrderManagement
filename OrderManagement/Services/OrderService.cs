@@ -1,6 +1,5 @@
-﻿]namespace OrderManagementAPI.Services
+﻿namespace OrderManagementAPI.Services;
+
+public class OrderService
 {
-    public class OrderService
-    {
-    }
 }
