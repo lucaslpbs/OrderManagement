@@ -5,7 +5,8 @@ namespace OrderManagementAPI.Application.DTOs
     {
         public class AbrirComandaDto
         {
-            public int NumeroMesa { get; set; }
+            public int Numero { get; set; }
+            public int Mesa { get; set; }
             public string NomeCliente { get; set; } = string.Empty;
             public string? Email { get; set; }
             public string? Telefone { get; set; }

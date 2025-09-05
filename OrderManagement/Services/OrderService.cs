@@ -13,35 +13,49 @@ public class OrderService
         _context = context;
     }
 
-    public async Task<Comanda> AbrirComandaAsync(int numeroMesa, string nomeCliente, string? email, string? telefone)
+    public async Task<Comanda> AbrirComandaAsync(int numero, int mesa, string nome, string? email, string? telefone)
     {
-        var comandaExistente = await _context.Comanda
-            .FirstOrDefaultAsync(c => c.Mesa == numeroMesa && c.Status == true);
+        var comanda = await _context.Comanda.FirstOrDefaultAsync(c => c.Numero == numero && c.Status == true);
+        if (comanda == null) throw new Exception("Comanda já em uso ou inexistente.");
 
-        if (comandaExistente != null)
-            throw new InvalidOperationException("Já existe uma comanda aberta para esta mesa.");
+        // marca como em uso
+        comanda.Status = false;
+        comanda.Mesa = mesa;
+        comanda.NomeCliente = nome;
+        comanda.Email = email;
+        comanda.Telefone = telefone;
+        comanda.DataAbertura = DateTime.UtcNow;
 
-        var comanda = new Comanda
+        // cria registro de cliente associado
+        var cliente = new Cliente
         {
-            Mesa = numeroMesa,
-            NomeCliente = nomeCliente,
+            Id = Guid.NewGuid(),
+            NumeroComanda = numero,
+            Mesa = mesa,
+            NomeCliente = nome,
             Email = email,
             Telefone = telefone,
-            DataAbertura = DateTime.UtcNow,
-            Status = true
+            ValorGasto = 0,
+            PedidosFeitos = new List<string>()
         };
+        _context.Clientes.Add(cliente);
 
-        _context.Comanda.Add(comanda);
         await _context.SaveChangesAsync();
-
         return comanda;
     }
+
 
     public async Task<Comanda?> GetByIdAsync(int id)
     {
         return await _context.Comanda
             .Include(c => c.Itens).ThenInclude(i => i.Produto)
             .FirstOrDefaultAsync(c => c.Numero == id);
+    }
+    public async Task<Comanda?> GetByNumeroAsync(int numero)
+    {
+        return await _context.Comanda
+            .Include(c => c.Itens)
+            .FirstOrDefaultAsync(c => c.Numero == numero);
     }
 
     public async Task<IEnumerable<Comanda>> GetAllAsync()
@@ -52,48 +66,61 @@ public class OrderService
             .ToListAsync();
     }
 
-    public async Task<Comanda> AdicionarItemAsync(int comandaId, Guid produtoId, int quantidade)
+    public async Task<Comanda> AdicionarItemAsync(int numeroComanda, Guid produtoId, int quantidade)
     {
         var comanda = await _context.Comanda
             .Include(c => c.Itens)
-            .FirstOrDefaultAsync(c => c.Numero == comandaId && c.Status == true);
+            .FirstOrDefaultAsync(c => c.Numero == numeroComanda && c.Status == false);
 
-        if (comanda == null)
-            throw new InvalidOperationException("Comanda não encontrada ou já fechada.");
+        if (comanda == null) throw new Exception("Comanda não está aberta.");
 
-        var produto = await _context.Produto.FirstOrDefaultAsync(p => p.Id == produtoId && p.Status == true);
+        // exemplo fictício de produto buscado
+        var produto = await _context.Produto.FindAsync(produtoId);
+        if (produto == null) throw new Exception("Produto não encontrado.");
 
-        if (produto == null)
-            throw new InvalidOperationException("Produto inválido ou inativo.");
-
-        var item = new ComandaItem
+        comanda.Itens.Add(new ComandaItem
         {
-            ProdutoId = produto.Id,
+            Id = Guid.NewGuid(),
+            ProdutoId = produtoId,
             Quantidade = quantidade,
             ValorUnitario = produto.Preco
-        };
+        });
 
-        comanda.Itens.Add(item);
+        // atualiza valor gasto do cliente
+        var cliente = await _context.Clientes.FirstOrDefaultAsync(x => x.NumeroComanda == numeroComanda);
+        if (cliente != null)
+        {
+            cliente.ValorGasto += produto.Preco * quantidade;
+            cliente.PedidosFeitos.Add($"{produto.Nome} x{quantidade}");
+        }
+
         await _context.SaveChangesAsync();
-
         return comanda;
     }
 
-    public async Task<Comanda> FecharComandaAsync(int comandaId, string observacao)
+    public async Task<Comanda> FecharComandaAsync(int numeroComanda, string observacao)
     {
         var comanda = await _context.Comanda
             .Include(c => c.Itens)
-            .FirstOrDefaultAsync(c => c.Numero == comandaId && c.Status == true);
+            .FirstOrDefaultAsync(c => c.Numero == numeroComanda && c.Status == false);
 
-        if (comanda == null)
-            throw new InvalidOperationException("Comanda não encontrada ou já fechada.");
+        if (comanda == null) throw new Exception("Comanda não está aberta.");
 
-        comanda.Status = false;
+        // seta data de fechamento
         comanda.DataFechamento = DateTime.UtcNow;
+
+        // resetar a comanda
+        comanda.Mesa = 0;
+        comanda.NomeCliente = string.Empty;
+        comanda.Email = null;
+        comanda.Telefone = null;
+        comanda.Itens.Clear();
+        comanda.Status = true;
 
         await _context.SaveChangesAsync();
         return comanda;
     }
+
 
     public async Task<IEnumerable<Comanda>> GetAtividadesRecentesAsync(string garcomId)
     {

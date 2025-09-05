@@ -32,10 +32,11 @@ namespace OrderManagementAPI.Controllers
 
             // Claims base
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.UserName!),
-        new Claim(JwtRegisteredClaimNames.Sub, user.Id)
-    };
+            {
+                new(ClaimTypes.Name, user.UserName!),
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(ClaimTypes.NameIdentifier, user.Id) // <- adicionando compatibilidade
+            };
 
             // Adiciona as roles do banco
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
@@ -54,7 +55,8 @@ namespace OrderManagementAPI.Controllers
 
             return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
-    }
 
-    public record LoginDto(string UserName, string Password);
+
+        public record LoginDto(string UserName, string Password);
+    }
 }

@@ -20,11 +20,18 @@ namespace OrderManagementAPI.Controllers
         [HttpPost("abrir-comanda")]
         public async Task<IActionResult> AbrirComanda([FromBody] AbrirComandaDto dto)
         {
-            var garcomId = User.FindFirst("sub")?.Value;
-            if (garcomId == null) return Unauthorized();
+            //var garcomId = User.FindFirst("sub")?.Value;
+            //if (garcomId == null) return Unauthorized();
 
-            var comanda = await _comandaService.AbrirComandaAsync(dto.NumeroMesa, dto.NomeCliente, dto.Email, dto.Telefone);
-            comanda.GarcomId = garcomId;
+            var comanda = await _comandaService.AbrirComandaAsync(
+                dto.Numero,
+                dto.Mesa,
+                dto.NomeCliente,
+                dto.Email,
+                dto.Telefone
+            );
+
+            //comanda.GarcomId = garcomId;
             return Ok(comanda);
         }
 
@@ -35,25 +42,25 @@ namespace OrderManagementAPI.Controllers
             return Ok(comandas);
         }
 
-        [HttpGet("comanda/{id}")]
-        public async Task<IActionResult> GetComanda(int id)
+        [HttpGet("comanda/{numero}")]
+        public async Task<IActionResult> GetComanda(int numero)
         {
-            var comanda = await _comandaService.GetByIdAsync(id);
+            var comanda = await _comandaService.GetByNumeroAsync(numero);
             if (comanda == null) return NotFound();
             return Ok(comanda);
         }
 
-        [HttpPost("comanda/{id}/adicionar-item")]
-        public async Task<IActionResult> AdicionarItem(int id, [FromBody] AdicionarItemDto dto)
+        [HttpPost("comanda/{numero}/adicionar-item")]
+        public async Task<IActionResult> AdicionarItem(int numero, [FromBody] AdicionarItemDto dto)
         {
-            var comanda = await _comandaService.AdicionarItemAsync(id, dto.ProdutoId, dto.Quantidade);
+            var comanda = await _comandaService.AdicionarItemAsync(numero, dto.ProdutoId, dto.Quantidade);
             return Ok(comanda);
         }
 
-        [HttpPost("comanda/{id}/fechar")]
-        public async Task<IActionResult> FecharComanda(int id, [FromBody] FecharComandaDto dto)
+        [HttpPost("comanda/{numero}/fechar")]
+        public async Task<IActionResult> FecharComanda(int numero, [FromBody] FecharComandaDto dto)
         {
-            var comanda = await _comandaService.FecharComandaAsync(id, dto.Observacao);
+            var comanda = await _comandaService.FecharComandaAsync(numero, dto.Observacao);
             return Ok(comanda);
         }
 
